@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <application android:label="@string/canf55_app_name" tools:replace="android:label">
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity" android:exported="true">
             <!-- Ordinary Android HOME firmware may not list LEANBACK_LAUNCHER apps. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

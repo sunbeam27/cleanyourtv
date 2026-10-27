@@ -3,6 +3,7 @@ package com.gathin.tvhome;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.provider.Settings;
 
 /** open_on_start_choice: the app Home opens once after each boot, picked in Launcher settings. */
@@ -23,6 +24,7 @@ final class OpenOnStart {
     }
 
     static int boot(Context ctx) {
+        if (Build.VERSION.SDK_INT < 24) return -1;
         return Settings.Global.getInt(ctx.getContentResolver(), Settings.Global.BOOT_COUNT, -1);
     }
 

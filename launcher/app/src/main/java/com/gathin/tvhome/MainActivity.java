@@ -2137,7 +2137,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (mem != null) appendStat(line, getString(R.string.stats_memory, mem[0], mem[1]));
         String free = formatGb(getResources(), Environment.getDataDirectory().getFreeSpace());
         if (!free.isEmpty()) appendStat(line, getString(R.string.stats_storage, free));
-        return StatsText.forLocale(line.toString(), getResources().getConfiguration().getLocales().get(0));
+        Locale locale = Build.VERSION.SDK_INT >= 24 ? getResources().getConfiguration().getLocales().get(0)
+                : getResources().getConfiguration().locale;
+        return StatsText.forLocale(line.toString(), locale);
     }
 
     // -1: need another sample. -2: this source cannot be read (Android 9 hides /proc/stat from apps).
@@ -2508,7 +2510,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // Spain (es-ES) and Catalan: "Buenas tardes" into the evening; "Buenas noches" from 21.
         // Latin American Spanish (es-MX, es-AR, …) keeps the default hours: evening strings are also
         // «Buenas noches», and there «Buenas noches» from ~17 matches local use better than Spain's 21.
-        Locale locale = getResources().getConfiguration().getLocales().get(0);
+        Locale locale = Build.VERSION.SDK_INT >= 24 ? getResources().getConfiguration().getLocales().get(0)
+                : getResources().getConfiguration().locale;
         String lang = locale.getLanguage();
         String country = locale.getCountry();
         if ("in".equals(lang) || "id".equals(lang)) {

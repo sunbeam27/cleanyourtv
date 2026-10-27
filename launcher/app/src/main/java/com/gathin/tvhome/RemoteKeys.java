@@ -310,8 +310,9 @@ final class RemoteKeys {
         switch (target) {
             case "mute":
                 // The media stream a TV plays everything on, with its own volume bar, as a remote's mute button would.
-                AudioManager audio = ctx.getSystemService(AudioManager.class);
-                if (audio != null) audio.adjustStreamVolume(AudioManager.STREAM_MUSIC,
+                AudioManager audio = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+                // ADJUST_TOGGLE_MUTE is understood from API 23; older firmware keeps its own mute key.
+                if (audio != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) audio.adjustStreamVolume(AudioManager.STREAM_MUSIC,
                         AudioManager.ADJUST_TOGGLE_MUTE, AudioManager.FLAG_SHOW_UI);
                 break;
             case "screensaver":

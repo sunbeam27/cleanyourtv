@@ -8,9 +8,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.PowerManager;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.text.TextUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +37,9 @@ final class GuardKeep {
     }
 
     static boolean offInStandby(Context context) {
-        UserManager users = context.getSystemService(UserManager.class);
+        // disableSelf and direct boot both arrived in API 24; leave this optional guard off below it.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return false;
+        UserManager users = (UserManager) context.getSystemService(Context.USER_SERVICE);
         if (users != null && !users.isUserUnlocked()) return false;
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_OFF, false);
     }
@@ -50,9 +54,10 @@ final class GuardKeep {
         // that arrives after that, so the first screen-off does nothing (Philips 65PUS8102).
         HomeKeyService.applyStandbyOptIn();
         if (!offInStandby(context)) return;
-        if (context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS)
+        if (context.getPackageManager().checkPermission(Manifest.permission.WRITE_SECURE_SETTINGS,
+                context.getPackageName())
                 != PackageManager.PERMISSION_GRANTED) return;
-        PowerManager power = context.getSystemService(PowerManager.class);
+        PowerManager power = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         // Still off: binding the helper again would sit on the power key. Wait for the screen.
         if (power != null && !power.isInteractive()) {
             watchScreenOn(context.getApplicationContext());
@@ -75,7 +80,7 @@ final class GuardKeep {
             if (!found) {
                 entries.add(mine.flattenToShortString());
                 Settings.Secure.putString(context.getContentResolver(),
-                        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, String.join(":", entries));
+                        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, TextUtils.join(":", entries));
             }
             Settings.Secure.putInt(context.getContentResolver(), Settings.Secure.ACCESSIBILITY_ENABLED, 1);
         } catch (RuntimeException ignored) {
@@ -85,6 +90,7 @@ final class GuardKeep {
 
     /** Drops the service from the list and puts it back on the next SCREEN_ON. The process has to stay up. */
     static void stepOut(AccessibilityService service) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return;
         watchScreenOn(service.getApplicationContext());
         service.disableSelf();
     }

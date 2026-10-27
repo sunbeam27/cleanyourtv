@@ -269,10 +269,15 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         Set<String> removed = LibraryApps.loadRemoved(ctx);
         if (!added.isEmpty()) {
             Set<String> seen = new HashSet<>(tvPackages);
-            for (ResolveInfo ri : pm.queryIntentActivities(
-                    new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)) {
-                if (ri.activityInfo != null && added.contains(ri.activityInfo.packageName)
-                        && seen.add(ri.activityInfo.packageName)) found.add(ri);
+            // A configured stock-home shortcut may expose only HOME on ordinary Android firmware.
+            // Prefer its normal launcher entry, and never add unselected HOME handlers to the grid.
+            for (String category : new String[]{Intent.CATEGORY_LAUNCHER, Intent.CATEGORY_HOME}) {
+                for (ResolveInfo ri : pm.queryIntentActivities(
+                        new Intent(Intent.ACTION_MAIN).addCategory(category), 0)) {
+                    if (ri.activityInfo != null && ri.activityInfo.exported
+                            && added.contains(ri.activityInfo.packageName)
+                            && seen.add(ri.activityInfo.packageName)) found.add(ri);
+                }
             }
         }
         Map<String, Cards.Card> cardByPkg = new HashMap<>();

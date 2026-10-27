@@ -1,0 +1,75 @@
+name: CAN F55 API 21 build
+
+on:
+  push:
+    branches: [can-f55-api21]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: can-f55-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  launcher:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Use preinstalled official runner toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x "$JAVA_HOME_17_X64/bin/java"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          test -f "$ANDROID_HOME/platforms/android-34/android.jar"
+          for tool in aapt apksigner zipalign; do
+            test -x "$ANDROID_HOME/build-tools/34.0.0/$tool"
+          done
+          # No sdkmanager installation or automatic license acceptance in this workflow.
+          echo '498495120a03b9a6ab5d155f5de3c8f0d986a449153702fb80fc80e134484f17  launcher/gradle/wrapper/gradle-wrapper.jar' | sha256sum --check
+      - name: Source configuration checks
+        run: python3 -m unittest discover -s tests -p test_can_f55_port.py -v
+      - name: F55 API 21 tests, lint and build
+        working-directory: launcher
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --console=plain testCanF55ReleaseUnitTest lintCanF55Release assembleCanF55Release
+      - name: Standard API 26 regression
+        working-directory: launcher
+        run: ./gradlew --no-daemon --console=plain testStandardReleaseUnitTest lintStandardRelease assembleStandardRelease
+      - name: Inspect built APKs and test signatures
+        run: |
+          python3 tools/verify_can_f55_apk.py --sdk "$ANDROID_HOME" \
+            --f55 launcher/app/build/outputs/apk/canF55/release/app-canF55-release.apk \
+            --standard launcher/app/build/outputs/apk/standard/release/app-standard-release.apk \
+            --output verification/apk-verification
+          cat verification/*.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload APKs and verification evidence
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cleanyourtv-can-f55-api21-${{ github.sha }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            launcher/app/build/outputs/apk/canF55/release/*.apk
+            launcher/app/build/outputs/apk/standard/release/*.apk
+            verification/
+      - name: Upload tests and lint reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: can-f55-check-reports-${{ github.sha }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            launcher/app/build/reports/lint-results-canF55Release.*
+            launcher/app/build/reports/lint-results-standardRelease.*
+            launcher/app/build/test-results/testCanF55ReleaseUnitTest/*.xml
+            launcher/app/build/test-results/testStandardReleaseUnitTest/*.xml

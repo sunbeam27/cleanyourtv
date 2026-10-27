@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.UserManager;
 import android.service.notification.NotificationListenerService;
 
@@ -19,8 +20,8 @@ public class GuardRevival extends NotificationListenerService {
 
     @Override
     public void onListenerConnected() {
-        UserManager users = getSystemService(UserManager.class);
-        if (users != null && !users.isUserUnlocked()) {
+        UserManager users = (UserManager) getSystemService(Context.USER_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && users != null && !users.isUserUnlocked()) {
             if (unlocked != null) return;
             unlocked = new BroadcastReceiver() {
                 @Override

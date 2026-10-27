@@ -53,7 +53,14 @@ final class Order {
     }
 
     static String dockKey(List<String> dockApps) {
-        return String.join(",", dockApps);
+        StringBuilder joined = new StringBuilder();
+        boolean first = true;
+        for (String pkg : dockApps) {
+            if (!first) joined.append(',');
+            joined.append(pkg);
+            first = false;
+        }
+        return joined.toString();
     }
 
     static String encode(Order order) {

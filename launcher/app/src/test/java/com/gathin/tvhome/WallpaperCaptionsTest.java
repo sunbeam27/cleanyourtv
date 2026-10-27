@@ -4,12 +4,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class WallpaperCaptionsTest {
+    @Rule public TemporaryFolder folder = new TemporaryFolder();
 
     @Test
     public void readsFilenameTabName() {
@@ -45,5 +51,18 @@ public class WallpaperCaptionsTest {
     @Test
     public void missingFolderHasNoNames() {
         assertTrue(WallpaperCaptions.read(null).isEmpty());
+    }
+
+    @Test
+    public void readsUtf8FileWithMixedLineEndings() throws Exception {
+        File captions = folder.newFile(WallpaperCaptions.FILE_NAME);
+        try (FileOutputStream out = new FileOutputStream(captions)) {
+            out.write(("# collection\r\n001.jpg\t星空\r\nmalformed\n002.jpg\tDawn")
+                    .getBytes(StandardCharsets.UTF_8));
+        }
+        Map<String, String> names = WallpaperCaptions.read(folder.getRoot());
+        assertEquals(2, names.size());
+        assertEquals("星空", names.get("001.jpg"));
+        assertEquals("Dawn", names.get("002.jpg"));
     }
 }

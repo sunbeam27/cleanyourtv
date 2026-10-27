@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Local CAN F55 defaults. Package identities are from prior diagnostics, not verified on this build. -->
+<resources>
+    <string name="canf55_app_name" translatable="false">CleanYourTV F55</string>
+    <string-array name="dock_apps">
+        <item>com.github.tvbox.osc.jun</item>
+        <item>cn.cibntv.ott</item>
+    </string-array>
+    <string-array name="library_apps" translatable="false">
+        <item>com.github.tvbox.osc.jun</item>
+        <item>cn.cibntv.ott</item>
+    </string-array>
+    <!-- Missing packages are skipped; no vendor tuner or HDMI route is assumed for this untested TV. -->
+    <string name="live_tv_package" translatable="false"></string>
+    <bool name="app_library">true</bool>
+    <bool name="library_ok_opens">true</bool>
+    <bool name="reduced_motion">true</bool>
+    <bool name="module_cards">false</bool>
+    <!-- BOOT_COUNT is unavailable on API 21; keep the existing firmware/TVBox startup path. -->
+    <bool name="boot_to_live_tv">false</bool>
+    <bool name="open_on_start_choice">false</bool>
+</resources>

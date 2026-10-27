@@ -15,6 +15,18 @@ android {
         versionName '3.0'
     }
 
+    // Local CAN F55 port: keep the upstream SDK floor and identity for the standard build.
+    flavorDimensions 'device'
+    productFlavors {
+        standard { dimension 'device' }
+        canF55 {
+            dimension 'device'
+            applicationIdSuffix '.canf55'
+            minSdk 21
+            versionNameSuffix '-canf55-api21'
+        }
+    }
+
     buildTypes {
         release {
             // R8 strips and optimises the code (AndroidX included): smaller APK, faster start on a slow TV CPU.
@@ -35,12 +47,15 @@ android {
     }
 
     compileOptions {
+        // java.time, java.util.function and Java 8 collection methods are used throughout Home.
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
 }
 
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
     implementation 'androidx.recyclerview:recyclerview:1.3.2'
     implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
     // Test only (never in the APK): plain JVM tests for the module card validators, src/test.

@@ -35,7 +35,8 @@ final class ServiceRepair {
     }
 
     static void restore(Context context) {
-        if (context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS)
+        if (context.getPackageManager().checkPermission(Manifest.permission.WRITE_SECURE_SETTINGS,
+                context.getPackageName())
                 != PackageManager.PERMISSION_GRANTED) return;
         try {
             ContentResolver cr = context.getContentResolver();

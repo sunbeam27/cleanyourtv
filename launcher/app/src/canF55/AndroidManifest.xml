@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!-- Basic API 21 build: no remote interception, revival, direct-boot helpers or location grant. -->
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:node="remove" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />
-    <uses-permission android:name="yandex.tv.permission.ACCESS_TV_SOURCE" tools:node="remove" />
+    <!-- The standard-only helper/location/vendor permissions are not declared in this flavor. -->
     <application android:label="@string/canf55_app_name" tools:replace="android:label">
         <service android:name=".HomeKeyService" tools:node="remove" />
         <service android:name=".InputKeyService" tools:node="remove" />

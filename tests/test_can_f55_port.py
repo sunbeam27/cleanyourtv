@@ -86,9 +86,13 @@ class CanF55SourceTest(unittest.TestCase):
             self.assertEqual("remove", item.get(TOOLS + "node"), name)
         for name in ("android.permission.WRITE_SECURE_SETTINGS", "android.permission.ACCESS_FINE_LOCATION",
                      "yandex.tv.permission.ACCESS_TV_SOURCE"):
-            item = next(child for child in manifest.findall("uses-permission")
-                        if child.get(ANDROID + "name") == name)
-            self.assertEqual("remove", item.get(TOOLS + "node"), name)
+            for source_set in ("main", "canF55"):
+                source = ET.parse(SOURCE / source_set / "AndroidManifest.xml").getroot()
+                self.assertFalse(any(child.get(ANDROID + "name") == name
+                                     for child in source.findall("uses-permission")), source_set + ": " + name)
+            standard = ET.parse(SOURCE / "standard/AndroidManifest.xml").getroot()
+            self.assertTrue(any(child.get(ANDROID + "name") == name
+                                for child in standard.findall("uses-permission")), name)
 
     def test_standard_build_entrypoints_use_the_standard_variant(self):
         root = SOURCE.parents[2]

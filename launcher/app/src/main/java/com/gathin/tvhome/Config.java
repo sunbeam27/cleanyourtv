@@ -652,6 +652,26 @@ final class Config {
         Festival festival = json == null ? Festival.NONE : Festival.parse(string(json, "festival", ""),
                 string(json, "festival_until", ""), string(json, "greeting", ""), string(json, "accent_color", ""));
 
+        // Hard capability boundary for the API 21 basic build, AFTER theme and saved settings.
+        // Importing a theme cannot bring removed helpers, unsupported boot counting, or module cards back.
+        if (res.getBoolean(R.bool.legacy_basic_mode)) {
+            moduleCards = false;
+            bootToLiveTv = false;
+            openOnStartChoice = false;
+            restoreKeyServices = false;
+            stockHomeRedirect = "";
+            powerOnHome = false;
+            powerOnHomeAlways = false;
+            homeLongPressHome = false;
+            keyFilter = false;
+            gamepadPassthrough = false;
+            consumeVolumeKeys = false;
+            appKeys = Collections.emptyList();
+            inputKeycodes = new int[0];
+            settingsKeycodes = new int[0];
+            handleViewInputs = false;
+        }
+
         return new Config(dock, fillDock, hidden, libraryApps, liveTv, liveTvAction, liveTvInputId, packageMap(launchActions), packageMap(appLabels),
                 packageMap(appBanners), panelService, panelAction, panelExtra, coocaaSources, inputAction, inputSources, inputUriScheme, Math.max(1, columns),
                 Math.max(0, rowsBelow), animations, advancedEffects, shamsi, greetingName, moduleCards, reducedMotion, bootToLiveTv,

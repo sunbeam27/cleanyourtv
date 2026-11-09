@@ -12,6 +12,8 @@
    - `bools.xml`: `date_single_line` false when the language's weekday and month names do not fit on one
      line (German, Spanish, Portuguese, Russian and Ukrainian set it), and `rtl_app_grid`/`rtl_menu_bar`
      true for a right-to-left language (`values-iw`).
+   - `styles.xml`: the `values-v23` override is an Android API qualifier, not a language. It adds
+     framework drawable tint only on API 23+; preserve that separation when changing translated layouts.
    - `fonts.xml`: point `font_body`, `font_regular` and the other `font_*` at the system families when the
      bundled Outfit has no glyphs for the language's letters (`values-vi`, #833).
    - `lunar.xml`: the lunar date format, the leap-month wording and the stem and branch names, for a
@@ -26,7 +28,7 @@
    needs its strings in every locale.
 6. Moving hard-coded text into resources is welcome; do not bundle unrelated build changes with it.
 7. Check the size gate before you push. A language's strings ship in the release APK, and that APK has to
-   stay under 589,824 B (576 KB): `launcher/app/build/outputs/apk/release/app-release.apk`, measured with
+   stay under 589,824 B (576 KB): `launcher/app/build/outputs/apk/standard/release/app-standard-release.apk`, measured with
    `stat -c %s` on Linux or `stat -f %z` on macOS, and checked by the "Launcher build and unit tests" job
    on every pull request. `README.md` quotes the launcher at about 532 KB, so a full language can be the
    difference between green and a failed build. A language that does not fit is a maintainer decision, not

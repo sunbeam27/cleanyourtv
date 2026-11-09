@@ -160,7 +160,7 @@ class AgentsNumbersTest(unittest.TestCase):
     def test_commands_are_the_ones_ci_runs(self):
         ci = CI.read_text(encoding="utf-8")
         for command in ("tools/venv/bin/python -m unittest discover -s tests -v",
-                        "./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease",
+                        "./gradlew --no-daemon testStandardReleaseUnitTest lintStandardRelease assembleStandardRelease",
                         "CLEANYOURTV_STRICT"):
             with self.subTest(command=command):
                 self.assertIn(command, ci, "ci.yml changed; update AGENTS.md and this test")

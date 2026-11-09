@@ -20,8 +20,8 @@ A="$ADB -s $TV"
 [ -f local.properties ] || echo "sdk.dir=$ANDROID_HOME" > local.properties
 
 # The wrapper jar directly, so a checkout with CRLF line endings in gradlew still builds.
-java -Xmx64m -cp gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain assembleRelease -q --console=plain
-APK=app/build/outputs/apk/release/app-release.apk
+java -Xmx64m -cp gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain assembleStandardRelease -q --console=plain
+APK=app/build/outputs/apk/standard/release/app-standard-release.apk
 
 $ADB connect "$TV" >/dev/null
 $A push "$APK" /data/local/tmp/tvhome.apk

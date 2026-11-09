@@ -104,8 +104,8 @@ class MinSdkGuardTest(unittest.TestCase):
         self.marker = self.base / "built"
         gradlew = self.launcher / "gradlew"
         gradlew.write_text(f'#!/bin/sh\ntouch "{self.marker}"\n'
-                           'mkdir -p app/build/outputs/apk/release\n'
-                           'printf apk > app/build/outputs/apk/release/app-release.apk\n')
+                           'mkdir -p app/build/outputs/apk/standard/release\n'
+                           'printf apk > app/build/outputs/apk/standard/release/app-standard-release.apk\n')
         gradlew.chmod(0o755)
         tools = self.base / "tools"
         (tools / "venv" / "bin").mkdir(parents=True)

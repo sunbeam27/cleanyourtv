@@ -47,10 +47,13 @@ the launcher reads `java.time` in `MainActivity.java`, `Sun.java`, `Festival.jav
 |---|---|---|
 | `MainActivity.java` | `PackageManager.getChangedPackages` | compare the installed package count |
 | `UiFont.java` | `Resources.getFont` | `ResourcesCompat.getFont` |
-| `WallpaperCaptions.java` | `Files.readAllLines(file.toPath())` | a plain `BufferedReader` |
+| `WallpaperCaptions.java` | upstream `Files.readAllLines(file.toPath())`; this CAN fork already uses `BufferedReader` | a plain `BufferedReader`, retained in this fork |
 | `WallpaperPlayer.java` | `Bitmap.Config.HARDWARE` | the same bitmap without it, `HARDWARE` being Android 8 and up |
 
-`lintRelease` then reports no NewApi errors on the fork. Home, the dock, the tile menu, the app
+This table records the Mtek owner's original port, not CAN F55 runtime evidence. In this CAN fork,
+`WallpaperCaptions.java` already uses `BufferedReader`; do not restore the removed `toPath()` call.
+
+`lintRelease` then reports no NewApi errors on the Mtek fork. Home, the dock, the tile menu, the app
 library, and the Settings and network buttons work, a reboot comes back to the launcher, and it takes
 about 28 MB of heap.
 

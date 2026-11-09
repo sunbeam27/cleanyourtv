@@ -122,8 +122,8 @@ class HandoverTest(unittest.TestCase):
         # No JDK and no Android SDK here: the build step only has to produce a file to push.
         gradlew = self.launcher / "gradlew"
         gradlew.write_text('#!/bin/sh\n'
-                           'mkdir -p app/build/outputs/apk/release\n'
-                           'printf apk > app/build/outputs/apk/release/app-release.apk\n')
+                           'mkdir -p app/build/outputs/apk/standard/release\n'
+                           'printf apk > app/build/outputs/apk/standard/release/app-standard-release.apk\n')
         gradlew.chmod(0o755)
         tools = self.base / "tools"
         (tools / "venv" / "bin").mkdir(parents=True)

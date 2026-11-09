@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- Basic API 21 build: no remote interception, revival, direct-boot helpers or location grant. -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />
+    <uses-permission android:name="yandex.tv.permission.ACCESS_TV_SOURCE" tools:node="remove" />
     <application android:label="@string/canf55_app_name" tools:replace="android:label">
+        <service android:name=".HomeKeyService" tools:node="remove" />
+        <service android:name=".InputKeyService" tools:node="remove" />
+        <service android:name=".GuardRevival" tools:node="remove" />
+        <receiver android:name=".GuardConfig" tools:node="remove" />
+        <activity android:name=".ProbeActivity" tools:node="remove" />
         <activity android:name=".MainActivity" android:exported="true">
             <!-- Ordinary Android HOME firmware may not list LEANBACK_LAUNCHER apps. -->
             <intent-filter>

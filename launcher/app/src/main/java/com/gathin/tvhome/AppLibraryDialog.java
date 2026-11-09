@@ -75,6 +75,7 @@ final class AppLibraryDialog {
     /** Only the latest load fills the catalogue, and it shows the popup if an opening is waiting. */
     private final LibraryLoads loads = new LibraryLoads();
     private final Activity activity;
+    private final Set<String> configuredHomeApps;
     private final Predicate<String> onHome;
     private final Runnable changed;
     private final LinearLayout panel;
@@ -143,8 +144,9 @@ final class AppLibraryDialog {
         if (popup.isShowing()) popup.update(width, height);
     }
 
-    AppLibraryDialog(Activity activity, boolean animations, boolean reducedMotion, boolean selectionMode, boolean okOpens, Predicate<String> onHome, Runnable changed, Runnable dismissed) {
+    AppLibraryDialog(Activity activity, boolean animations, boolean reducedMotion, boolean selectionMode, boolean okOpens, List<String> configuredHomeApps, Predicate<String> onHome, Runnable changed, Runnable dismissed) {
         this.activity = activity;
+        this.configuredHomeApps = new HashSet<>(configuredHomeApps);
         this.animations = animations;
         this.rtl = activity.getResources().getBoolean(R.bool.rtl_app_grid);
         this.reducedMotion = reducedMotion;
@@ -230,6 +232,19 @@ final class AppLibraryDialog {
                     String pkg = info.activityInfo.packageName;
                     if (Intent.CATEGORY_LEANBACK_LAUNCHER.equals(category)) tv.add(pkg);
                     if (!pkg.equals(self) && !unique.containsKey(pkg)) unique.put(pkg, info);
+                }
+            }
+            // The selected stock-home shortcut can expose only HOME on ordinary Android firmware.
+            // Keep it discoverable after Remove from Home, without exposing every HOME handler.
+            Set<String> selectedHomes = new HashSet<>(configuredHomeApps);
+            selectedHomes.addAll(LibraryApps.load(activity));
+            if (!selectedHomes.isEmpty()) {
+                for (ResolveInfo info : pm.queryIntentActivities(
+                        new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)) {
+                    if (info.activityInfo == null || !info.activityInfo.exported) continue;
+                    String pkg = info.activityInfo.packageName;
+                    if (!pkg.equals(self) && selectedHomes.contains(pkg) && !unique.containsKey(pkg))
+                        unique.put(pkg, info);
                 }
             }
             Map<String, String> names = new HashMap<>();

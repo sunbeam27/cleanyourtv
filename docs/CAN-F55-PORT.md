@@ -5,6 +5,34 @@
 [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv)。上游官方版本的最低版本仍为
 API 26；本适配不能作为官方支持 CAN F55 的证明。
 
+## basic1 精简修订
+
+`canF55` 版本号为 `versionCode 10` / `3.0-canf55-api21-basic1`，标准变体仍为 API 26。
+本轮基于分支提交 `ffa882e07c94fd6b54de3907b28d59b29f85823d`，不代表已经真机验证。
+
+- 从 F55 合并清单移除 HomeKeyService、InputKeyService、GuardRevival、GuardConfig 和 ProbeActivity，
+  不提供遥控器拦截、HOME 抢占、通知守护复活或待机重挂助手。GuardRevival 依赖的
+  `onListenerConnected()` 从 API 22 才有，本来就不能在 API 21 按原设计工作。
+- 移除 F55 对 WRITE_SECURE_SETTINGS、ACCESS_FINE_LOCATION、Yandex 输入源权限的申请。
+  主题写入 provider 仍由其自身权限限制，不因移除应用权限而开放给普通应用。
+- `values/profile.xml` 的构建能力开关 `legacy_basic_mode` 在主题及保存设置之后生效。
+  模块卡片、开机自动打开、HOME 重定向、按键映射、自动恢复助手及输入键接管被强制关闭，
+  导入主题不能重新打开这些功能。标准变体不受此开关影响。
+- 从普通应用列表或显式 Activity 试开时，BACK 可退出。作为 HOME 打开时，BACK 留在桌面。
+  singleTask 的后续启动会更新入口类型；临时设置/输入菜单与 Activity 重建保留该状态。
+- 已配置的 HOME-only 原厂快捷方式在应用库也可找到，移除 tile 后能重新添加。
+  不把所有 HOME 处理程序加入应用库，普通/电视启动入口仍优先且同包去重。
+- 标准 CI 与安装脚本的纯构建部分改为 `assembleStandardRelease` 及对应标准 APK 路径。
+  安装、HOME 切换及安全检查逻辑未改变，F55 仍不得运行这些一键安装脚本。
+
+这里是移除高风险可选能力，而非删掉全部现代 Java 语法。保留 `desugar_jdk_libs:2.0.4`，
+因为原界面的日期与集合代码需要它在 API 21 上运行；直接删除会重新引入类/方法缺失。
+AndroidX RecyclerView 1.3.2 与 DynamicAnimation 1.0.0 不要求 API 26，因此保留网格与焦点交互。
+
+当前源码检查与 JVM 测试不代替 Android 编译、合并清单、API 21 冷启动或真实遥控测试。
+验证工具会检查最终 F55 APK 不再包含上述服务和权限，不以源文件中的 remove 标记代替最终 APK 检查。
+API 21 每次返回仍保留保守的全量应用刷新，没有宣称老机性能改善。
+
 ## 设备依据与本轮边界
 
 历史诊断记录称设备为 CAN 超能电视 F55，Android 5.0.1 / API 21，未列出 leanback feature；
@@ -56,9 +84,9 @@ TVBox。本轮未重新验证 ADB 连接、root、硬件 ABI、包是否仍安�
 | --- | --- |
 | 输入源自定义名称与隐藏状态，API 24 | 不调用 `loadCustomLabel()` / `isHidden()`。名称退回系统输入名称、设备名称或现有配置；无法读取系统设置中的隐藏标志，因此可能列出固件隐藏的直通输入。原厂输入源菜单仍是核对和使用输入源的可靠路径。 |
 | 网络互联网验证状态，API 23 | 可显示连接状态，但不把缺少 `NET_CAPABILITY_VALIDATED` 当成已验证互联网，也不据此误报“无互联网”。API 21 的网络状态颜色回到普通色；连接 Wi-Fi/以太网不等于互联网可用。 |
-| 每次开机只打开一次指定应用，`BOOT_COUNT` | 读不到计数时返回未知值并跳过启动选择，不用进程重启猜测一次新开机。本 flavor 默认关闭这一选择，也不改变已有 TVBox 开机进入方式。 |
-| 自定义按键动作 `mute`，API 23 | API 23 以下不发送 `ADJUST_TOGGLE_MUTE`；该自定义映射跳过静音切换。电视原有遥控静音键由固件处理。本阶段不启用按键助手。 |
-| 待机时退出/唤醒重挂无障碍助手，API 24 | API 24 以下关闭该可选待机 helper，不调用 `disableSelf()` 或依赖 direct-boot/unlocked API；本阶段不启用任何无障碍或通知监听服务。 |
+| 每次开机只打开一次指定应用，`BOOT_COUNT` | 读不到计数时返回未知值并跳过启动选择，不用进程重启猜测一次新开机。basic1 在主题加载后强制关闭这一选择，也不改变已有 TVBox 开机进入方式。 |
+| 自定义按键动作 `mute`，API 23 | API 23 以下不发送 `ADJUST_TOGGLE_MUTE`；该自定义映射跳过静音切换。电视原有遥控静音键由固件处理。basic1 已移除按键助手和自定义映射。 |
+| 待机时退出/唤醒重挂无障碍助手，API 24 | API 24 以下关闭该可选待机 helper，不调用 `disableSelf()` 或依赖 direct-boot/unlocked API；basic1 已移除相关无障碍及通知监听服务。 |
 | 资源字体加载，API 26 | F55 覆写为系统 `sans-serif` 字体族；运行代码也在低于 API 26 时回退系统字体。保留字重层次，实际字形与上游 Outfit 字体不同。 |
 | `java.time`、`java.util.function` 与部分 Java 集合 API | 开启 core library desugaring，以 `desugar_jdk_libs:2.0.4` 提供低版本库兼容；Java 源码级别仍为 17。代价是 APK 大小增加，最终依赖、构建及 lint 结果见交付材料。 |
 | 原厂对 HOME 的接管 | 没有绕过。仅注册可选 HOME 并支持普通应用入口；不设置默认 HOME、不停用原厂、不改按键服务或 TVBox 自启动。显式普通启动成功不能证明 HOME 键与开机后会进入本桌面。 |
@@ -82,12 +110,14 @@ TVBox。本轮未重新验证 ADB 连接、root、硬件 ABI、包是否仍安�
 快捷方式、没有默认选择开机跳转、系统字体：
 
 ```powershell
-python -m unittest discover -s tests -p test_can_f55_port.py -v
+python -m unittest discover -s tests -p "test_can_f55*.py" -v
 ```
 
 默认输出位于 `launcher/app/build/outputs/apk/canF55/release/`。本地 release 沿用上游的 debug
-签名配置，不是官方生产签名；实际签名证书摘要以最终 APK 检查为准。以后覆盖安装需要相同签名，
-不要通过卸载原厂或其他包来绕过签名不匹配。
+签名配置，不是官方生产签名；实际签名证书摘要以最终 APK 检查为准。GitHub Actions 使用临时
+runner，未配置持久签名密钥，不同运行生成的 debug 证书可能不同。提高 versionCode 不能解决
+签名不一致；以后覆盖安装必须先比较已安装包和新 APK 的证书。不自动卸载实验包、原厂或其他包
+来绕过签名不匹配。稳定签名方案需要另行明确配置，不把密钥提交到仓库。
 
 ## 后续只读诊断清单（尚未执行）
 

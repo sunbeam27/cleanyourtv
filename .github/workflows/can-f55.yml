@@ -2,7 +2,7 @@ name: CAN F55 API 21 build
 
 on:
   push:
-    branches: [can-f55-api21]
+    branches: [can-f55-api21, can-f55-api21-basic]
   workflow_dispatch:
 
 permissions:
@@ -34,7 +34,7 @@ jobs:
           # No sdkmanager installation or automatic license acceptance in this workflow.
           echo '498495120a03b9a6ab5d155f5de3c8f0d986a449153702fb80fc80e134484f17  launcher/gradle/wrapper/gradle-wrapper.jar' | sha256sum --check
       - name: Source configuration checks
-        run: python3 -m unittest discover -s tests -p test_can_f55_port.py -v
+        run: python3 -m unittest discover -s tests -p 'test_can_f55*.py' -v
       - name: F55 API 21 tests, lint and build
         working-directory: launcher
         run: |

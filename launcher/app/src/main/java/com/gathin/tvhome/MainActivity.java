@@ -95,6 +95,8 @@ import java.util.Set;
  * tvOS style home: black, a pinned dock row, an app grid, and one glass highlight that springs between tiles.
  */
 public class MainActivity extends Activity implements AppAdapter.TileListener {
+    private static final String STATE_HOME_ENTRY = "home_entry";
+    private final HomeEntry homeEntry = new HomeEntry();
     @Override
     protected void attachBaseContext(android.content.Context base) {
         super.attachBaseContext(LauncherLocale.wrap(base));   // locale
@@ -227,6 +229,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private float density;
     /** Module cards (res/values/config.xml, module_cards): discovered on resume, shown only after the owner's Show. */
     private boolean moduleCards;
+    private List<String> configuredLibraryApps = Collections.emptyList();
     /** config settings_key_keycodes / settings_key_panel, so the Settings button works on Home without HomeKeyService. */
     private int[] settingsKeycodes = new int[0];
     private boolean settingsKeyPanel;
@@ -389,6 +392,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        homeEntry.launch(savedInstanceState != null
+                ? savedInstanceState.getBoolean(STATE_HOME_ENTRY, false)
+                : getIntent() != null && getIntent().hasCategory(Intent.CATEGORY_HOME));
         setContentView(R.layout.activity_main);
         density = getResources().getDisplayMetrics().density;
         // config.xml, overlaid by config.json from a pushed theme (see Config and tools/theme.sh).
@@ -419,6 +425,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         liveTvAction = cfg.liveTvAction;
         liveTvInputId = cfg.liveTvInputId;
         appLibraryEnabled = cfg.appLibrary;
+        configuredLibraryApps = cfg.libraryApps;
         tileMenuEnabled = cfg.tileMenu;
         inputAction = cfg.inputAction;
         inputSources = cfg.inputSources;
@@ -879,9 +886,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * open it again. Nothing to do when the TV has no inputs to list (the pill is hidden then).
      * top_menu hides the pill, so the list hangs under the gear there, as in showInputs().
      */
+    private void clearUtilityIntent() {
+        Intent main = new Intent(Intent.ACTION_MAIN);
+        if (homeEntry.isHome()) main.addCategory(Intent.CATEGORY_HOME);
+        setIntent(main);
+    }
+
     private boolean openInputsIfAsked(Intent intent) {
         if (intent == null || !ACTION_VIEW_INPUTS.equals(intent.getAction())) return false;
-        setIntent(new Intent(Intent.ACTION_MAIN));
+        clearUtilityIntent();
         View anchor = topMenu ? findViewById(R.id.btnSettings) : btnInputs;
         if (anchor.getVisibility() != View.VISIBLE) return true;
         if (anchor.isLaidOut()) {
@@ -911,7 +924,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private boolean openLauncherSettingsIfAsked(Intent intent) {
         if (intent == null || !ACTION_LAUNCHER_SETTINGS.equals(intent.getAction())) return false;
-        setIntent(new Intent(Intent.ACTION_MAIN));
+        clearUtilityIntent();
         startActivityForResult(new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST);
         return true;
     }
@@ -926,6 +939,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         super.onNewIntent(intent);
         if (openLauncherSettingsIfAsked(intent)) return;
         if (openInputsIfAsked(intent)) return;
+        homeEntry.launch(intent != null && intent.hasCategory(Intent.CATEGORY_HOME));
+        if (intent != null) setIntent(intent);
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
         grid.scrollToPosition(0);
         lastFocused = 0;
@@ -1603,8 +1618,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle state) {
+        state.putBoolean(STATE_HOME_ENTRY, homeEntry.isHome());
+        super.onSaveInstanceState(state);
+    }
+
+    @Override
     public void onBackPressed() {
-        // Home screen: Back goes nowhere.
+        // A real Home stays put. The F55 ordinary-app trial must have a way back to the previous app.
+        if (homeEntry.canExit(getResources().getBoolean(R.bool.legacy_basic_mode))) finish();
     }
 
     // ---- glass highlight -------------------------------------------------------------------------
@@ -1616,7 +1638,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         libraryFocusPending = false;
         libraryFromTopBar = false;
         libraryFromVpnPill = false;
-        appLibrary = new AppLibraryDialog(this, animations, reducedMotion, appLibrarySelection, libraryOkOpens, adapter::containsPackage, () -> reloadApps(false), () -> {
+        appLibrary = new AppLibraryDialog(this, animations, reducedMotion, appLibrarySelection, libraryOkOpens, configuredLibraryApps, adapter::containsPackage, () -> reloadApps(false), () -> {
             appLibrary = null;
             openPopup = null;
             if (libraryFromTopBar) {

@@ -40,7 +40,7 @@ PROMPT = ROOT / "PROMPT.md"
 API_CALLS = {
     "MainActivity.java": ("getChangedPackages", "getChangedPackages", "installed package count"),
     "UiFont.java": ("getFont(", "Resources.getFont", "ResourcesCompat.getFont"),
-    "WallpaperCaptions.java": ("toPath()", "toPath()", "BufferedReader"),
+    "WallpaperCaptions.java": ("new BufferedReader(", "toPath()", "BufferedReader"),
     "WallpaperPlayer.java": ("Config.HARDWARE", "Config.HARDWARE", "Android 8"),
 }
 
@@ -124,6 +124,10 @@ class TheBuildStepsMatchTheLauncher(unittest.TestCase):
             self.assertIn(name, self.body, f"the note no longer names {name}")
             self.assertIn(replacement, self.body,
                           f"the note no longer says what {called} was replaced with")
+
+    def test_can_fork_keeps_the_already_applied_caption_reader_fallback(self):
+        self.assertNotIn("toPath()", self.java["WallpaperCaptions.java"])
+        self.assertIn("this CAN fork already uses", self.body)
 
     def test_the_java_time_files_it_names_are_the_ones_that_import_it(self):
         importing = {name for name, text in self.java.items() if "java.time." in text}

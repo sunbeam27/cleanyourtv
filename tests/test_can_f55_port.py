@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 
 
 SOURCE = Path(__file__).resolve().parents[1] / "launcher" / "app" / "src"
+TOOLS = "{http://schemas.android.com/tools}"
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 
 
@@ -58,6 +59,44 @@ class CanF55SourceTest(unittest.TestCase):
         self.assertEqual("false", effective["open_on_start_choice"].text)
         self.assertFalse(effective["stock_home_redirect"].text)
         self.assertFalse(effective["live_tv_package"].text)
+
+    def test_basic_capability_is_build_specific_and_not_a_theme_switch(self):
+        self.assertEqual("false", resources("main", "profile.xml")["legacy_basic_mode"].text)
+        self.assertEqual("true", resources("canF55", "profile.xml")["legacy_basic_mode"].text)
+        code = (SOURCE / "main/java/com/gathin/tvhome/Config.java").read_text()
+        start = code.index("if (res.getBoolean(R.bool.legacy_basic_mode))")
+        end = code.index("return new Config", start)
+        guard = code[start:end]
+        self.assertGreater(start, code.index('choices.getBoolean("animations"'))
+        for feature in ("moduleCards", "bootToLiveTv", "openOnStartChoice", "restoreKeyServices",
+                        "powerOnHome", "powerOnHomeAlways", "homeLongPressHome", "keyFilter",
+                        "gamepadPassthrough", "consumeVolumeKeys", "handleViewInputs"):
+            self.assertIn(feature + " = false;", guard)
+        self.assertIn('stockHomeRedirect = "";', guard)
+        self.assertIn("appKeys = Collections.emptyList();", guard)
+        self.assertNotIn('bool(json, "legacy_basic_mode"', code)
+
+    def test_f55_removes_unsupported_helpers_and_unneeded_permissions(self):
+        manifest = ET.parse(SOURCE / "canF55/AndroidManifest.xml").getroot()
+        app = manifest.find("application")
+        for tag, name in (("service", ".HomeKeyService"), ("service", ".InputKeyService"),
+                          ("service", ".GuardRevival"), ("receiver", ".GuardConfig"),
+                          ("activity", ".ProbeActivity")):
+            item = next(child for child in app.findall(tag) if child.get(ANDROID + "name") == name)
+            self.assertEqual("remove", item.get(TOOLS + "node"), name)
+        for name in ("android.permission.WRITE_SECURE_SETTINGS", "android.permission.ACCESS_FINE_LOCATION",
+                     "yandex.tv.permission.ACCESS_TV_SOURCE"):
+            item = next(child for child in manifest.findall("uses-permission")
+                        if child.get(ANDROID + "name") == name)
+            self.assertEqual("remove", item.get(TOOLS + "node"), name)
+
+    def test_standard_build_entrypoints_use_the_standard_variant(self):
+        root = SOURCE.parents[2]
+        for name in ("launcher/build-and-install.sh", "launcher/build-and-install.ps1", "examples/tcl-43c645/build-and-install.sh", ".github/workflows/ci.yml"):
+            code = (root / name).read_text().replace("\\", "/")
+            self.assertIn("assembleStandardRelease", code)
+            self.assertIn("outputs/apk/standard/release/app-standard-release.apk", code)
+            self.assertNotIn("outputs/apk/release/app-release.apk", code)
 
     def test_f55_uses_system_fonts_without_a_resource_font_loader(self):
         fonts = resources("canF55", "fonts.xml")

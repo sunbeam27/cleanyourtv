@@ -37,7 +37,9 @@ INTERNET = "android.permission.INTERNET"
 LEANBACK_FEATURE = "android.software.leanback"
 SIGNING_NOTICE = (
     "Test/debug build only, not a production release. Signature checks establish "
-    "APK integrity and scheme compatibility; a certificate digest does not establish publisher trust."
+    "APK integrity and scheme compatibility; a certificate digest does not establish publisher trust. "
+    "Fresh CI runners can generate different debug keys: compare the installed certificate before an update. "
+    "Do not uninstall an existing app to bypass a signature mismatch."
 )
 
 
@@ -173,7 +175,25 @@ def manifest_summary(root: dict, package: str) -> dict:
         "launcher_activities": [activity["name"] for activity in activities
                                 if has_entry(activity, {LAUNCHER})],
         "permissions": permissions,
+        "activity_components": [activity["name"] for activity in activities],
+        "service_components": [component_name(node["attrs"].get("android:name", ""), package)
+                               for node in children(application, "service")],
+        "receiver_components": [component_name(node["attrs"].get("android:name", ""), package)
+                                for node in children(application, "receiver")],
         "leanback_required": leanback[0] if len(leanback) == 1 else None,
+    }
+
+
+def basic_profile_checks(report: dict) -> dict[str, bool]:
+    removed = {"HomeKeyService", "InputKeyService", "GuardRevival", "GuardConfig"}
+    components = report["service_components"] + report["receiver_components"]
+    permissions = set(report["permissions"])
+    return {
+        "no_home_interception_helpers": not any(name.rsplit(".", 1)[-1] in removed for name in components),
+        "no_probe_activity": not any(name.rsplit(".", 1)[-1] == "ProbeActivity" for name in report["activity_components"]),
+        "no_secure_settings_permission": "android.permission.WRITE_SECURE_SETTINGS" not in permissions,
+        "no_location_permission": "android.permission.ACCESS_FINE_LOCATION" not in permissions,
+        "no_vendor_source_permission": "yandex.tv.permission.ACCESS_TV_SOURCE" not in permissions,
     }
 
 
@@ -243,6 +263,7 @@ def verify_apk(path: Path, variant: str, commands: dict[str, list[str]]) -> dict
             "zipalign_4_bytes": aligned.returncode == 0,
         }
         if variant == "canF55":
+            report["checks"].update(basic_profile_checks(report))
             report["checks"]["main_android_launcher"] = has_entry(report["main_activity"], {LAUNCHER})
             report["checks"]["v1_signature_for_api_21"] = report["signing"]["schemes"].get("v1") is True
         else:

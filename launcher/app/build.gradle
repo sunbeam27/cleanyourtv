@@ -23,7 +23,8 @@ android {
             dimension 'device'
             applicationIdSuffix '.canf55'
             minSdk 21
-            versionNameSuffix '-canf55-api21'
+            versionCode 10
+            versionNameSuffix '-canf55-api21-basic1'
         }
     }
 

@@ -31,7 +31,7 @@ BUILD_GRADLE = ROOT / "launcher/app/build.gradle"
 
 HEADING = "## 2. Improve the launcher"
 # The launcher job's size check, in the form ci.yml writes it:
-#   size=$(stat -c %s launcher/app/build/outputs/apk/release/app-release.apk)
+#   size=$(stat -c %s launcher/app/build/outputs/apk/standard/release/app-standard-release.apk)
 #   test "$size" -lt 589824
 STAT_LINE = re.compile(r"size=\$\(stat -c %s ([^)\s]+)\)")
 LIMIT_LINE = re.compile(r'test "\$size" -lt (\d+)')
@@ -138,7 +138,7 @@ class ContributingBuildTest(unittest.TestCase):
 
     def test_ci_still_builds_the_release_apk_from_launcher(self):
         job = launcher_job(self.ci)
-        self.assertIn("assembleRelease", job,
+        self.assertIn("assembleStandardRelease", job,
                       "ci.yml's launcher job no longer builds the release APK the page tells people to build")
         self.assertIn("working-directory: launcher", job,
                       "ci.yml's launcher job no longer runs from launcher/, which is where the page's command runs")
@@ -147,7 +147,7 @@ class ContributingBuildTest(unittest.TestCase):
 
     def test_the_page_names_the_command_and_where_the_apk_lands(self):
         body = section(self.page)
-        self.assertTrue("assembleRelease" in body,
+        self.assertTrue("assembleStandardRelease" in body,
                         "the build route CONTRIBUTING gives for a laptop names no Gradle task")
         self.assertTrue(apk_path(self.ci) in body,
                         "the page does not say where a by-hand build leaves the APK")
